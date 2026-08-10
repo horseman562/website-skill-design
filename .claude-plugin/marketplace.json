@@ -1,0 +1,17 @@
+{
+  "name": "bayuratech",
+  "owner": {
+    "name": "Naqiuddin"
+  },
+  "metadata": {
+    "description": "Bayuratech's own Claude Code skills"
+  },
+  "plugins": [
+    {
+      "name": "bayuratech-pitch",
+      "description": "Build Bayuratech spec-demo pitch sites for Malaysian SMEs — research, single-file HTML build, and outreach kit",
+      "source": "./",
+      "version": "1.0.0"
+    }
+  ]
+}
