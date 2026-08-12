@@ -27,15 +27,17 @@ Also copy this table into the new project's `notes.md`.
 | Spa #1 | Warm Ivory + Rose + Gold | 2-col light (no dark overlay) | Bodoni Moda, Jost |
 | Chicken #1 | Cobalt Blue + Cayenne Red + Butter Cream | Cobalt poster block + arch photo + tilted stickers | Archivo Black, Manrope |
 | Cafe #1 | Ink Black + Bone + Sage | Full-bleed photo + inset hairline frame (magazine cover), centred light serif | Newsreader, Figtree |
+| Cafe #2 *(reusable template)* | Espresso + Oat + Brass | Bottom-anchored asymmetric split over full-bleed photo | EB Garamond, Hanken Grotesk |
 
 ---
 
 ## Fonts already spent
 
 Anton · Archivo Black · Barlow · Bebas Neue · Big Shoulders · Bodoni Moda ·
-Cormorant Garamond · DM Sans · DM Serif · Exo 2 · Figtree · Fraunces · Inter · Jost ·
-Karla · Lato · Lora · Manrope · Montserrat · Newsreader · Nunito · Oswald · Outfit ·
-Playfair · Plus Jakarta · Poppins · Raleway · Space Grotesk · Syne · Work Sans
+Cormorant Garamond · DM Sans · DM Serif · EB Garamond · Exo 2 · Figtree · Fraunces ·
+Hanken Grotesk · Inter · Jost · Karla · Lato · Lora · Manrope · Montserrat · Newsreader ·
+Nunito · Oswald · Outfit · Playfair · Plus Jakarta · Poppins · Raleway · Space Grotesk ·
+Syne · Work Sans
 
 ## Hero layouts already spent
 
@@ -43,7 +45,7 @@ Full dark floating · Split 55/45 dark · Full dark collage · Full dark 100vh �
 Split diagonal · Full dark bottom-anchor · Light split right panel · Dark + photo stats
 strip · Centered + CTA + stats strip · CSS glow blobs (no photo) · Left-gradient fade ·
 2-col light split · Cobalt poster block + arch photo + stickers ·
-Magazine-cover inset hairline frame
+Magazine-cover inset hairline frame · Bottom-anchored asymmetric split
 
 ## Ideas not yet used
 
@@ -52,6 +54,25 @@ Magazine-cover inset hairline frame
 - Split with a diagonal clip-path seam
 - Marquee headline that scrolls behind the CTA
 - Photo in a circular mask with type wrapping around it
+
+---
+
+## Reusable templates vs client sites
+
+Some builds are **generic templates** pitched to many prospects in one trade (the aircond site,
+Cafe #2). They still get a differentiation row, because the template itself must not clone an
+existing client site — if a prospect ever sees both, the pitch dies.
+
+Rules for templates:
+
+- Give it a neutral invented brand name, never a real one
+- **No fabricated social proof** — no review counts, star ratings, follower numbers or "since
+  20XX". Use only structural facts (hours, menu size, number of spaces). Add the prospect's real
+  numbers after you know them
+- Avoid photos containing any legible business name or signage
+- Put a **swap list** at the top of `index.html` as a comment, and repeat it in `notes.md`
+- A straight content swap of a template does **not** earn a new differentiation row — only a
+  genuine restyle does
 
 ---
 
