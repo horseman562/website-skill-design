@@ -14,6 +14,12 @@ three files. Demos deploy to `<slug>.bayuratech.com`.
 **Work in this order.** Research grounds the design; skipping ahead produces a generic
 site that reads as a template and kills the pitch.
 
+> **First, check `reference/verticals/` for the prospect's trade.** Some trades are
+> regulated and the general house style breaks the law there — a private clinic may not
+> publish laudatory copy, treatment testimonials, or a red cross, and its site needs
+> Medicine Advertisements Board approval before going live. If a vertical file exists,
+> read it before researching; it overrides the defaults below.
+
 ---
 
 ## 1. Research the prospect
@@ -134,6 +140,7 @@ flag it at the top of `contacts.md` as the reason.
 
 | File | Use |
 |---|---|
+| `reference/verticals/clinic.md` | **Private clinics — read first if the prospect is one.** MAB/MMC advertising rules, permitted vs prohibited content, clinic-specific research sources |
 | `reference/differentiation.md` | The running table of every site's theme/hero/fonts. **Read before designing, append after.** |
 | `reference/architecture.md` | The house style — section order, signature CSS moves, tokens |
 | `reference/page-skeleton.html` | Token-driven boilerplate to start from |
