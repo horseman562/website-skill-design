@@ -28,6 +28,7 @@ Also copy this table into the new project's `notes.md`.
 | Chicken #1 | Cobalt Blue + Cayenne Red + Butter Cream | Cobalt poster block + arch photo + tilted stickers | Archivo Black, Manrope |
 | Cafe #1 | Ink Black + Bone + Sage | Full-bleed photo + inset hairline frame (magazine cover), centred light serif | Newsreader, Figtree |
 | Cafe #2 *(reusable template)* | Espresso + Oat + Brass | Bottom-anchored asymmetric split over full-bleed photo | EB Garamond, Hanken Grotesk |
+| **Clinic #4 *(reusable template)*** | **Chalk + Clay + Deep Olive** | **Light editorial, left type stack + circular photo mask with hairline rings** | **Spectral, Epilogue** |
 
 ---
 
@@ -37,7 +38,7 @@ Anton · Archivo Black · Barlow · Bebas Neue · Big Shoulders · Bodoni Moda �
 Cormorant Garamond · DM Sans · DM Serif · EB Garamond · Exo 2 · Figtree · Fraunces ·
 Hanken Grotesk · Inter · Jost · Karla · Lato · Lora · Manrope · Montserrat · Newsreader ·
 Nunito · Oswald · Outfit · Playfair · Plus Jakarta · Poppins · Raleway · Space Grotesk ·
-Syne · Work Sans
+Spectral · Syne · Work Sans · Epilogue
 
 ## Hero layouts already spent
 
@@ -45,7 +46,8 @@ Full dark floating · Split 55/45 dark · Full dark collage · Full dark 100vh �
 Split diagonal · Full dark bottom-anchor · Light split right panel · Dark + photo stats
 strip · Centered + CTA + stats strip · CSS glow blobs (no photo) · Left-gradient fade ·
 2-col light split · Cobalt poster block + arch photo + stickers ·
-Magazine-cover inset hairline frame · Bottom-anchored asymmetric split
+Magazine-cover inset hairline frame · Bottom-anchored asymmetric split ·
+Light editorial + circular photo mask
 
 ## Ideas not yet used
 
@@ -53,7 +55,6 @@ Magazine-cover inset hairline frame · Bottom-anchored asymmetric split
 - Asymmetric two-photo collage with a vertical headline
 - Split with a diagonal clip-path seam
 - Marquee headline that scrolls behind the CTA
-- Photo in a circular mask with type wrapping around it
 
 ---
 
