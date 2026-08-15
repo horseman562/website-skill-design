@@ -119,7 +119,36 @@ beside it. `tabular-nums` on table columns and axis ticks only — never on a he
 
 ---
 
-## 6. Interaction is part of the deliverable
+## 6. Maps (choropleth)
+
+Only when geography is the question. A ranked bar chart answers "who is biggest" better.
+
+- **Get real geometry; never hand-draw a country.** Malaysia: DOSM's own open data,
+  `dosm-malaysia/data-open` → `datasets/geodata/administrative_1_state.geojson` (16 units).
+- **Process it in a script that writes the file directly** — fetch, project, simplify with
+  Douglas-Peucker, emit SVG paths. 382KB of GeoJSON becomes ~25KB of paths, and the raw data
+  never goes through a context window.
+- ⚠️ **Douglas-Peucker fails on closed rings.** First point == last point, so the baseline
+  has zero length and every perpendicular distance is 0 — rings collapse to 2 points and
+  vanish. Split the ring at its farthest point from the start, then simplify the two open
+  chains.
+- **Sequential ramp, one hue** — this is the one place a magnitude ramp is right, because
+  position carries identity. On a *bar* chart of the same data it would be wrong.
+- **Prefer quantile bands** when one region dominates; equal-interval flattens everything
+  else into one pale class.
+- **Choropleths over-weight big empty regions.** Pair the map with a ranked list, and
+  leader-line the top few if the leaders are small on the map (in Malaysia the top two
+  revenue regions, Selangor and KL, are among the smallest by area).
+- **Re-validate the ramp for dark.** The light ramp reused on a dark surface typically fails
+  the ordinal floor. Cap it, and invert it so brighter reads as higher on dark ground.
+- **Wide countries need a minimum width on small screens.** Malaysia is ~3:1; in a 305px
+  column it renders 101px tall and is unreadable. Give it a `min-width` and let the card
+  scroll — never let the page scroll sideways.
+- Feed the map and any companion chart from **one shared data table** so they cannot disagree.
+
+---
+
+## 7. Interaction is part of the deliverable
 
 - **Line/area → crosshair.** A vertical hairline snaps to the nearest X and the tooltip
   lists **every series** at that X. The reader aims at a date, not at a 2px line.
@@ -136,7 +165,7 @@ beside it. `tabular-nums` on table columns and axis ticks only — never on a he
 
 ---
 
-## 7. Before calling it done
+## 8. Before calling it done
 
 Render it, screenshot it, and **look at it**. Then check against this list — every entry
 below was a real defect caught this way, not theory:
