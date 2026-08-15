@@ -1,10 +1,15 @@
 # Bayuratech Claude Code skills
 
-Naqiuddin's own Claude Code plugin. Currently ships one skill:
+Naqiuddin's own Claude Code plugin. Ships two skills:
 
 **`pitch-site`** — build a spec-demo pitch site for a Malaysian SME prospect: research the
 business from its social presence with Playwright, build a single-file HTML demo with a
 design that's never been reused, and write the research + outreach docs.
+
+**`dashboard-site`** — build a single-page analytics dashboard: KPI row, interactive charts
+with crosshair tooltips, one filter row, and a table view, as a self-contained HTML file.
+Ships a complete working dashboard as its reference implementation, and a colour palette
+that is validated by script rather than chosen by eye.
 
 ---
 
@@ -66,6 +71,10 @@ skills/
       page-skeleton.html    # token-driven boilerplate
       notes-template.md
       contacts-template.md
+  dashboard-site/
+    SKILL.md                # dashboard rules: form → colour → marks → interaction
+    reference/
+      dashboard-reference.html   # complete working dashboard
 ```
 
 ---

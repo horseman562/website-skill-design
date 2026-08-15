@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════════════════════════════
+  PULSE — analytics dashboard demo (Bayuratech)
+
+  Palette is VALIDATED, not eyeballed. Re-run before changing any series hex:
+    node scripts/validate_palette.js "#1baf7a,#2a78d6,#eb6834" --pairs all --mode light
+    node scripts/validate_palette.js "#199e70,#3987e5,#d95926" --pairs all --mode dark
+    node scripts/validate_palette.js "#86b6ef,#5598e7,#2a78d6,#1c5cab,#104281" --ordinal --mode light
+
+  NOTE: aqua #1baf7a is 2.74:1 on the light surface (below 3:1). The relief
+  rule therefore applies — every aqua mark carries a visible direct label AND
+  the table view exists. Do not remove either.
+
+  SWAP LIST for a real client:
+    1. "Pulse"            → product / company name
+    2. DATA object        → real figures (or wire to an API)
+    3. "RM"               → currency
+    4. Footer source line → real source + refresh cadence
+  ══════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pulse — Business Overview</title>
+<style>
+  /* ── Tokens ───────────────────────────────────────────────────────── */
+  /* Declared on :root so `body` can resolve them too — declaring them on
+     .viz-root alone leaves body's color: var(--text-1) unresolvable, and
+     every element without an explicit color inherits black into dark mode. */
+  :root {
+    color-scheme: light;
+    --surface-1:   #fcfcfb;
+    --page:        #f9f9f7;
+    --text-1:      #0b0b0b;
+    --text-2:      #52514e;
+    --muted:       #898781;
+    --grid:        #e1e0d9;
+    --axis:        #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --hover-wash:  rgba(11,11,11,0.04);
+
+    --series-1:    #1baf7a;
+    --series-2:    #2a78d6;
+    --series-3:    #eb6834;
+    --neutral:     #b8b6ae;
+
+    --seq-1: #86b6ef; --seq-2: #5598e7; --seq-3: #2a78d6;
+    --seq-4: #1c5cab; --seq-5: #104281;
+
+    --good:        #0ca30c;
+    --critical:    #d03b3b;
+    --delta-up:    #006300;
+    --delta-down:  #b3261e;
+
+    --radius: 10px;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:   #1a1a19;
+    --page:        #0d0d0d;
+    --text-1:      #ffffff;
+    --text-2:      #c3c2b7;
+    --muted:       #898781;
+    --grid:        #2c2c2a;
+    --axis:        #383835;
+    --border:      rgba(255,255,255,0.10);
+    --hover-wash:  rgba(255,255,255,0.06);
+
+    --series-1:    #199e70;
+    --series-2:    #3987e5;
+    --series-3:    #d95926;
+    --neutral:     #5c5a55;
+
+    --delta-up:    #0ca30c;
+    --delta-down:  #e66767;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page);
+    color: var(--text-1);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .viz-root { background: var(--page); min-height: 100vh; padding: 28px 28px 40px; }
+  .shell { max-width: 1360px; margin: 0 auto; }
+
+  /* ── Header ───────────────────────────────────────────────────────── */
+  .head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+  .head-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+  .head-tools { display: flex; align-items: center; gap: 8px; }
+
+  /* ── Filter row — ONE row, above everything it scopes ─────────────── */
+  .filters {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 14px; margin-bottom: 18px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .filter-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted); margin-right: 2px;
+  }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button {
+    font: inherit; font-size: 12.5px; font-weight: 500;
+    padding: 6px 13px; border: 0; background: transparent;
+    color: var(--text-2); cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: background 0.15s, color 0.15s;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { background: var(--hover-wash); }
+  .seg button[aria-pressed="true"] { background: var(--series-1); color: #fff; font-weight: 600; }
+  :root[data-theme="dark"] .seg button[aria-pressed="true"] { color: #06120d; }
+
+  select, .btn {
+    font: inherit; font-size: 12.5px; font-weight: 500;
+    padding: 6px 11px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-1);
+    cursor: pointer;
+  }
+  .btn:hover, select:hover { background: var(--hover-wash); }
+  .btn[aria-pressed="true"] { border-color: var(--series-1); color: var(--series-1); font-weight: 600; }
+  .spacer { flex: 1 1 auto; }
+  .stale { font-size: 12px; color: var(--muted); }
+
+  /* ── KPI row ──────────────────────────────────────────────────────── */
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 14px;
+  }
+  .kpi {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px 14px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .kpi-label { font-size: 12.5px; color: var(--text-2); font-weight: 500; }
+  .kpi-val { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.12; }
+  .kpi.hero .kpi-val { font-size: 50px; letter-spacing: -0.03em; }
+  .kpi-foot { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .delta { font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+  .delta.up { color: var(--delta-up); }
+  .delta.down { color: var(--delta-down); }
+  .delta-note { font-size: 12px; color: var(--muted); }
+  .spark { margin-left: auto; }
+
+  /* ── Chart grid ───────────────────────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px 14px;
+    min-width: 0;
+  }
+  .card.wide { grid-column: span 2; }
+  .card-head { margin-bottom: 14px; }
+  .card-title { font-size: 14.5px; font-weight: 620; letter-spacing: -0.01em; line-height: 1.3; }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-2); }
+  .legend-key { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+  .legend-key.box { width: 11px; height: 11px; border-radius: 3px; }
+
+  /* donut legend with dotted leaders */
+  .dl { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+  .dl-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; font-size: 12.5px; }
+  .dl-name { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); }
+  .dl-lead { border-bottom: 1px dotted var(--axis); transform: translateY(-2px); }
+  .dl-val { font-weight: 620; color: var(--text-1); font-variant-numeric: tabular-nums; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  /* keep the donut from scaling to the full card width and towering */
+  #c-chan svg { max-width: 232px; margin: 0 auto 4px; }
+  .tick { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .dlabel { font-size: 11.5px; font-weight: 600; fill: var(--text-1); font-variant-numeric: tabular-nums; }
+  .hit { fill: transparent; cursor: pointer; }
+  .mark { transition: opacity 0.12s; }
+  .mark.dim { opacity: 0.45; }
+
+  /* ── Tooltip ──────────────────────────────────────────────────────── */
+  #tip {
+    position: fixed; z-index: 60; pointer-events: none;
+    background: #16161a; color: #fff;
+    border-radius: 8px; padding: 9px 11px;
+    font-size: 12.5px; line-height: 1.45;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.28);
+    opacity: 0; transform: translate(-50%, -100%) translateY(-10px);
+    transition: opacity 0.12s;
+    max-width: 260px;
+  }
+  #tip.on { opacity: 1; }
+  #tip .t-head { font-size: 11.5px; color: #b9b8b2; margin-bottom: 5px; letter-spacing: 0.02em; }
+  #tip .t-row { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+  #tip .t-key { width: 12px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+  #tip .t-val { font-weight: 700; font-variant-numeric: tabular-nums; }
+  #tip .t-name { color: #b9b8b2; }
+
+  /* ── Table view ───────────────────────────────────────────────────── */
+  .tablewrap {
+    margin-top: 14px; background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; overflow-x: auto;
+  }
+  .tablewrap[hidden] { display: none; }
+  .tablewrap h2 { font-size: 14.5px; font-weight: 620; margin-bottom: 4px; }
+  .tablewrap p.note { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; margin-bottom: 22px; }
+  caption { text-align: left; font-weight: 620; padding: 10px 0 8px; font-size: 13px; }
+  th, td { text-align: right; padding: 7px 12px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { font-variant-numeric: tabular-nums; }
+
+  footer {
+    margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap;
+    font-size: 12px; color: var(--muted);
+  }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  :focus-visible { outline: 2px solid var(--series-2); outline-offset: 2px; border-radius: 3px; }
+
+  /* ── Responsive ───────────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .card.wide { grid-column: span 2; }
+  }
+  @media (max-width: 720px) {
+    .viz-root { padding: 18px 16px 30px; }
+    .kpis { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .card.wide { grid-column: span 1; }
+    .kpi.hero .kpi-val { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="shell">
+
+  <header class="head">
+    <div>
+      <h1>Business overview</h1>
+      <p class="head-sub" id="headSub">Revenue, orders and channel mix</p>
+    </div>
+    <div class="head-tools">
+      <button class="btn" id="tableBtn" aria-pressed="false">Table view</button>
+      <button class="btn" id="themeBtn">Dark</button>
+    </div>
+  </header>
+
+  <!-- FILTERS — one row, scopes everything below (dataviz: never per-card) -->
+  <div class="filters" role="group" aria-label="Dashboard filters">
+    <span class="filter-label">Period</span>
+    <div class="seg" id="rangeSeg" role="group" aria-label="Date range">
+      <button data-range="7" aria-pressed="false">7 days</button>
+      <button data-range="30" aria-pressed="true">30 days</button>
+      <button data-range="90" aria-pressed="false">90 days</button>
+    </div>
+    <span class="filter-label" style="margin-left:8px">Channel</span>
+    <select id="channelSel" aria-label="Channel">
+      <option value="all">All channels</option>
+      <option value="Online store">Online store</option>
+      <option value="Marketplace">Marketplace</option>
+      <option value="Walk-in">Walk-in</option>
+    </select>
+    <span class="spacer"></span>
+    <span class="stale" id="asOf"></span>
+  </div>
+
+  <!-- KPIs — each carries a comparison, per dashboard-designer -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- CHARTS -->
+  <div class="grid">
+    <section class="card wide" aria-labelledby="t-rev">
+      <div class="card-head">
+        <h2 class="card-title" id="t-rev">Revenue</h2>
+        <p class="card-sub" id="s-rev"></p>
+      </div>
+      <div id="c-rev"></div>
+      <div class="legend" id="l-rev"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-chan">
+      <div class="card-head">
+        <h2 class="card-title" id="t-chan">Channel mix</h2>
+        <p class="card-sub" id="s-chan"></p>
+      </div>
+      <div id="c-chan"></div>
+      <div class="dl" id="l-chan"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-prod">
+      <div class="card-head">
+        <h2 class="card-title" id="t-prod">Top products</h2>
+        <p class="card-sub">Revenue contribution, this period</p>
+      </div>
+      <div id="c-prod"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-day">
+      <div class="card-head">
+        <h2 class="card-title" id="t-day">Orders by weekday</h2>
+        <p class="card-sub" id="s-day"></p>
+      </div>
+      <div id="c-day"></div>
+    </section>
+
+    <section class="card" aria-labelledby="t-state">
+      <div class="card-head">
+        <h2 class="card-title" id="t-state">Revenue by state</h2>
+        <p class="card-sub">Share of total revenue, ranked</p>
+      </div>
+      <div id="c-state"></div>
+    </section>
+  </div>
+
+  <!-- TABLE VIEW — required relief: aqua sits below 3:1 on the light surface -->
+  <div class="tablewrap" id="tablewrap" hidden>
+    <h2>Data table</h2>
+    <p class="note">Every value plotted above, reachable without hovering.</p>
+    <div id="tables"></div>
+  </div>
+
+  <footer>
+    <span>Source: Demo dataset — figures are illustrative.</span>
+    <span id="refreshed"></span>
+  </footer>
+
+</div>
+</div>
+
+<div id="tip" role="tooltip" aria-hidden="true"></div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ── Formatting ───────────────────────────────────────────────────── */
+  const CUR = "RM";
+  const nf = n => n.toLocaleString("en-MY");
+  const money = n => CUR + " " + nf(Math.round(n));
+  const compact = n => n >= 1e6 ? CUR + " " + (n/1e6).toFixed(1) + "M"
+                     : n >= 1e3 ? CUR + " " + (n/1e3).toFixed(1) + "K"
+                     : CUR + " " + nf(Math.round(n));
+  const pct = n => n.toFixed(1) + "%";
+  const cssv = name => getComputedStyle(document.querySelector(".viz-root")).getPropertyValue(name).trim();
+
+  /* Round an axis top to a clean number (0 / 4k / 8k …), never 3.5k / 37 */
+  function niceMax(v, steps) {
+    if (!(v > 0)) return steps;
+    const raw = v / steps;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw / mag;
+    const step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10;
+    return step * mag * steps;
+  }
+
+  /* ── Deterministic pseudo-random so the demo is stable ────────────── */
+  function rng(seed) {
+    let s = seed >>> 0;
+    return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  }
+
+  const CHANNELS = ["Online store", "Marketplace", "Walk-in"];
+  const CH_SHARE = { "Online store": 0.46, "Marketplace": 0.31, "Walk-in": 0.23 };
+  const PRODUCTS = ["Signature blend 1kg", "Cold brew 12-pack", "Ceramic dripper",
+                    "Subscription — monthly", "Gift set", "Filter papers"];
+  const STATES   = ["Selangor", "Kuala Lumpur", "Johor", "Penang", "Perak", "Sabah"];
+  const DOW      = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+  /* Build a day-series once, slice per range. */
+  function buildDays(n, seed) {
+    const r = rng(seed), out = [];
+    const today = new Date(); today.setHours(0,0,0,0);
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(today); d.setDate(d.getDate() - i);
+      const dow = (d.getDay() + 6) % 7;               // 0=Mon
+      const weekend = dow >= 5 ? 1.22 : 1.0;
+      const trend = 1 + (n - i) / (n * 3.4);
+      const noise = 0.80 + r() * 0.42;
+      const base  = 7400 * weekend * trend * noise;
+      const orders = Math.round(base / (198 + r() * 58));
+      out.push({ date: d, dow, revenue: base, orders });
+    }
+    return out;
+  }
+  const ALL_DAYS = buildDays(180, 20260812);
+
+  function slice(range, channel) {
+    const cur  = ALL_DAYS.slice(-range);
+    const prev = ALL_DAYS.slice(-range * 2, -range);
+    const f = channel === "all" ? 1 : CH_SHARE[channel];
+    const scale = rows => rows.map(d => ({ ...d,
+      revenue: d.revenue * f,
+      orders: Math.max(1, Math.round(d.orders * f)) }));
+    return { cur: scale(cur), prev: scale(prev), channel, range };
+  }
+
+  const sum = (a, k) => a.reduce((t, d) => t + d[k], 0);
+
+  /* ── Tooltip ──────────────────────────────────────────────────────── */
+  const tip = document.getElementById("tip");
+  function showTip(x, y, head, rows) {
+    tip.replaceChildren();
+    if (head) {
+      const h = document.createElement("div");
+      h.className = "t-head";
+      h.textContent = head;                      // untrusted labels → textContent
+      tip.appendChild(h);
+    }
+    rows.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "t-row";
+      if (r.color) {
+        const k = document.createElement("span");
+        k.className = "t-key"; k.style.background = r.color;
+        row.appendChild(k);
+      }
+      const v = document.createElement("span");
+      v.className = "t-val"; v.textContent = r.value;     // value leads
+      row.appendChild(v);
+      if (r.name) {
+        const n = document.createElement("span");
+        n.className = "t-name"; n.textContent = r.name;   // name follows
+        row.appendChild(n);
+      }
+      tip.appendChild(row);
+    });
+    tip.style.left = x + "px";
+    tip.style.top  = y + "px";
+    tip.classList.add("on");
+    tip.setAttribute("aria-hidden", "false");
+  }
+  function hideTip() { tip.classList.remove("on"); tip.setAttribute("aria-hidden","true"); }
+  document.addEventListener("scroll", hideTip, true);
+
+  /* ── SVG helpers ──────────────────────────────────────────────────── */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (n, a = {}) => { const e = document.createElementNS(NS, n);
+    for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  /* rounded on the data-end only, square at the baseline */
+  function barPathH(x, y, w, h, r) {           // grows right
+    r = Math.max(0, Math.min(r, w, h / 2));
+    return `M${x},${y} H${x+w-r} Q${x+w},${y} ${x+w},${y+r} V${y+h-r} Q${x+w},${y+h} ${x+w-r},${y+h} H${x} Z`;
+  }
+  function barPathV(x, y, w, h, r) {           // grows up
+    r = Math.max(0, Math.min(r, h, w / 2));
+    return `M${x},${y+h} V${y+r} Q${x},${y} ${x+r},${y} H${x+w-r} Q${x+w},${y} ${x+w},${y+r} V${y+h} Z`;
+  }
+  function arcPath(cx, cy, rOut, rIn, a0, a1) {
+    const p = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    const large = (a1 - a0) > Math.PI ? 1 : 0;
+    const [x0,y0] = p(rOut,a0), [x1,y1] = p(rOut,a1);
+    const [x2,y2] = p(rIn,a1),  [x3,y3] = p(rIn,a0);
+    return `M${x0},${y0} A${rOut},${rOut} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${rIn},${rIn} 0 ${large} 0 ${x3},${y3} Z`;
+  }
+
+  /* ── Chart: revenue line (2 series → crosshair + legend) ──────────── */
+  function renderRevenue(d) {
+    const host = document.getElementById("c-rev");
+    host.replaceChildren();
+    const W = 860, H = 380, m = { t: 16, r: 58, b: 28, l: 52 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const cur = d.cur, prev = d.prev;
+    const max = Math.max(...cur.map(x=>x.revenue), ...prev.map(x=>x.revenue));
+    const top = niceMax(max, 3);
+    const X = i => m.l + (cur.length === 1 ? iw/2 : (i / (cur.length - 1)) * iw);
+    const Y = v => m.t + ih - (v / top) * ih;
+
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Revenue this period compared with the previous period" });
+
+    for (let i = 0; i <= 3; i++) {
+      const v = top * i / 3, y = Y(v);
+      svg.appendChild(el("line", { x1: m.l, x2: m.l + iw, y1: y, y2: y,
+        stroke: cssv("--grid"), "stroke-width": 1 }));
+      const t = el("text", { x: m.l - 10, y: y + 4, "text-anchor": "end", class: "tick" });
+      t.textContent = v >= 1000 ? (v/1000) + "k" : v;
+      svg.appendChild(t);
+    }
+
+    const line = (rows, color, width, dashOpacity) => {
+      const dstr = rows.map((r, i) => `${i ? "L" : "M"}${X(i)},${Y(r.revenue)}`).join(" ");
+      const p = el("path", { d: dstr, fill: "none", stroke: color,
+        "stroke-width": width, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      if (dashOpacity) p.setAttribute("opacity", dashOpacity);
+      return p;
+    };
+
+    // area wash under primary — 10% opacity
+    const areaD = cur.map((r,i)=>`${i?"L":"M"}${X(i)},${Y(r.revenue)}`).join(" ")
+      + ` L${X(cur.length-1)},${m.t+ih} L${X(0)},${m.t+ih} Z`;
+    svg.appendChild(el("path", { d: areaD, fill: cssv("--series-1"), opacity: 0.10 }));
+
+    svg.appendChild(line(prev, cssv("--neutral"), 2, 1));
+    svg.appendChild(line(cur,  cssv("--series-1"), 2, null));
+
+    // end marker + direct label (relief for the sub-3:1 aqua)
+    const lastI = cur.length - 1, lx = X(lastI), ly = Y(cur[lastI].revenue);
+    svg.appendChild(el("circle", { cx: lx, cy: ly, r: 4.5,
+      fill: cssv("--series-1"), stroke: cssv("--surface-1"), "stroke-width": 2 }));
+    const lab = el("text", { x: lx + 10, y: ly + 4, class: "dlabel" });
+    lab.textContent = compact(cur[lastI].revenue);
+    svg.appendChild(lab);
+
+    // x ticks — first, middle, last only
+    [0, Math.floor(lastI/2), lastI].forEach(i => {
+      const t = el("text", { x: X(i), y: m.t + ih + 20, "text-anchor": "middle", class: "tick" });
+      t.textContent = cur[i].date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+      svg.appendChild(t);
+    });
+
+    // crosshair layer — reader aims at a date, never at a 2px line
+    const cross = el("line", { y1: m.t, y2: m.t + ih, stroke: cssv("--axis"),
+      "stroke-width": 1, opacity: 0 });
+    svg.appendChild(cross);
+    const dot1 = el("circle", { r: 4.5, fill: cssv("--series-1"),
+      stroke: cssv("--surface-1"), "stroke-width": 2, opacity: 0 });
+    const dot2 = el("circle", { r: 4.5, fill: cssv("--neutral"),
+      stroke: cssv("--surface-1"), "stroke-width": 2, opacity: 0 });
+    svg.appendChild(dot2); svg.appendChild(dot1);
+
+    const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, class: "hit" });
+    svg.appendChild(hit);
+
+    const at = ev => {
+      const r = svg.getBoundingClientRect();
+      const px = (ev.clientX - r.left) / r.width * W;
+      let i = Math.round((px - m.l) / iw * (cur.length - 1));
+      i = Math.max(0, Math.min(cur.length - 1, i));
+      const x = X(i);
+      cross.setAttribute("x1", x); cross.setAttribute("x2", x); cross.setAttribute("opacity", 1);
+      dot1.setAttribute("cx", x); dot1.setAttribute("cy", Y(cur[i].revenue)); dot1.setAttribute("opacity", 1);
+      dot2.setAttribute("cx", x); dot2.setAttribute("cy", Y(prev[i].revenue)); dot2.setAttribute("opacity", 1);
+      const sx = r.left + x / W * r.width;
+      const sy = r.top + Y(Math.max(cur[i].revenue, prev[i].revenue)) / H * r.height;
+      showTip(sx, sy, cur[i].date.toLocaleDateString("en-GB",
+        { weekday:"short", day:"numeric", month:"short" }), [
+        { color: cssv("--series-1"), value: money(cur[i].revenue),  name: "This period" },
+        { color: cssv("--neutral"),  value: money(prev[i].revenue), name: "Previous" }
+      ]);
+    };
+    hit.addEventListener("pointermove", at);
+    hit.addEventListener("pointerleave", () => {
+      hideTip(); cross.setAttribute("opacity",0);
+      dot1.setAttribute("opacity",0); dot2.setAttribute("opacity",0);
+    });
+
+    host.appendChild(svg);
+
+    const lg = document.getElementById("l-rev");
+    lg.replaceChildren();
+    [["This period", cssv("--series-1")], ["Previous period", cssv("--neutral")]]
+      .forEach(([n, c]) => {
+        const i = document.createElement("span"); i.className = "legend-item";
+        const k = document.createElement("span"); k.className = "legend-key";
+        k.style.background = c; i.appendChild(k);
+        i.appendChild(document.createTextNode(n));
+        lg.appendChild(i);
+      });
+  }
+
+  /* ── Chart: channel donut (2px surface gap between segments) ──────── */
+  function renderChannel(d) {
+    const host = document.getElementById("c-chan");
+    host.replaceChildren();
+    /* The mix always shows every channel — filtering emphasises one rather than
+       dropping the rest. Two reasons: a single-channel filter would leave a
+       2-slice donut (a stat tile's job), and colour must follow the entity, so
+       "Walk-in" stays orange whether or not it is the active filter. */
+    const grand = sum(slice(d.range, "all").cur, "revenue");
+    const COLOR_OF = {
+      "Online store": cssv("--series-1"),
+      "Marketplace":  cssv("--series-2"),
+      "Walk-in":      cssv("--series-3"),
+      "Other":        cssv("--neutral")
+    };
+    const parts = CHANNELS.map(c => ({ name: c, value: grand * CH_SHARE[c] }));
+    parts.push({ name: "Other", value: grand * 0.04 });
+    const t2 = parts.reduce((s,p) => s + p.value, 0);
+    const colors = parts.map(p => COLOR_OF[p.name]);
+    const active = d.channel;
+
+    const S = 210, cx = S/2, cy = S/2, rOut = 92, rIn = 58;
+    const svg = el("svg", { viewBox: `0 0 ${S} ${S}`, role: "img",
+      "aria-label": "Revenue split by sales channel" });
+    const gap = 2 / rOut;                       // 2px surface gap, in radians
+    let a = -Math.PI / 2;
+    parts.forEach((p, i) => {
+      const span = (p.value / t2) * Math.PI * 2;
+      const a0 = a + gap / 2, a1 = a + span - gap / 2;
+      if (a1 > a0) {
+        const path = el("path", { d: arcPath(cx, cy, rOut, rIn, a0, a1),
+          fill: colors[i % colors.length], class: "mark" });
+        if (active !== "all" && p.name !== active) path.classList.add("dim");
+        path.setAttribute("tabindex", "0");
+        path.setAttribute("role", "img");
+        path.setAttribute("aria-label", `${p.name}: ${money(p.value)}, ${pct(p.value/t2*100)}`);
+        const enter = ev => {
+          svg.querySelectorAll(".mark").forEach(m => m.classList.add("dim"));
+          path.classList.remove("dim");
+          const r = path.getBoundingClientRect();
+          showTip(r.left + r.width/2, r.top + r.height/2,
+            p.name, [{ color: colors[i % colors.length],
+                       value: money(p.value), name: pct(p.value/t2*100) }]);
+        };
+        const leave = () => {   // restore the filter's emphasis, not a blanket clear
+          svg.querySelectorAll(".mark").forEach(m => m.classList.remove("dim"));
+          if (active !== "all") svg.querySelectorAll(".mark").forEach((m, j) => {
+            if (parts[j] && parts[j].name !== active) m.classList.add("dim");
+          });
+          hideTip();
+        };
+        path.addEventListener("pointerenter", enter);
+        path.addEventListener("focus", enter);
+        path.addEventListener("pointerleave", leave);
+        path.addEventListener("blur", leave);
+        svg.appendChild(path);
+      }
+      a += span;
+    });
+    const c1 = el("text", { x: cx, y: cy - 2, "text-anchor": "middle",
+      style: `font-size:19px;font-weight:650;fill:${cssv("--text-1")}` });
+    c1.textContent = compact(t2);
+    svg.appendChild(c1);
+    const c2 = el("text", { x: cx, y: cy + 16, "text-anchor": "middle",
+      style: `font-size:11.5px;fill:${cssv("--muted")}` });
+    c2.textContent = "total revenue";
+    svg.appendChild(c2);
+    host.appendChild(svg);
+
+    const lg = document.getElementById("l-chan");
+    lg.replaceChildren();
+    parts.forEach((p, i) => {
+      const row = document.createElement("div"); row.className = "dl-row";
+      const nm = document.createElement("span"); nm.className = "dl-name";
+      const k = document.createElement("span"); k.className = "legend-key box";
+      k.style.background = colors[i % colors.length];
+      nm.appendChild(k); nm.appendChild(document.createTextNode(p.name));
+      const ld = document.createElement("span"); ld.className = "dl-lead";
+      const vl = document.createElement("span"); vl.className = "dl-val";
+      vl.textContent = pct(p.value / t2 * 100);
+      row.append(nm, ld, vl); lg.appendChild(row);
+    });
+  }
+
+  /* ── Chart: top products (single series → no legend box) ──────────── */
+  function renderProducts(d) {
+    const host = document.getElementById("c-prod");
+    host.replaceChildren();
+    const total = sum(d.cur, "revenue");
+    const weights = [0.27, 0.21, 0.17, 0.15, 0.12, 0.08];
+    const rows = PRODUCTS.map((p, i) => ({ name: p, value: total * weights[i] }));
+    const max = Math.max(...rows.map(r => r.value));
+
+    const W = 380, rowH = 34, H = rows.length * rowH + 8;
+    const labelW = 0, barX = 0, barW = W - 78;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Revenue by product, ranked" });
+
+    rows.forEach((r, i) => {
+      const y = i * rowH + 4;
+      const nm = el("text", { x: 0, y: y + 10, class: "tick",
+        style: `fill:${cssv("--text-2")};font-size:11.5px` });
+      nm.textContent = r.name;
+      svg.appendChild(nm);
+
+      const w = Math.max(2, (r.value / max) * barW);
+      const bh = 10;                                  // ≤24px cap
+      const by = y + 15;
+      const bar = el("path", { d: barPathH(barX, by, w, bh, 4),
+        fill: cssv("--series-1"), class: "mark" });
+      svg.appendChild(bar);
+
+      const vl = el("text", { x: w + 8, y: by + bh - 0.5, class: "dlabel" });
+      vl.textContent = compact(r.value);              // visible label = relief
+      svg.appendChild(vl);
+
+      const hit = el("rect", { x: 0, y: y, width: W, height: rowH - 2, class: "hit", tabindex: "0" });
+      hit.setAttribute("role", "img");
+      hit.setAttribute("aria-label", `${r.name}: ${money(r.value)}`);
+      const enter = () => {
+        svg.querySelectorAll(".mark").forEach(m => m.classList.add("dim"));
+        bar.classList.remove("dim");
+        const b = bar.getBoundingClientRect();
+        showTip(b.right, b.top + b.height / 2, r.name,
+          [{ color: cssv("--series-1"), value: money(r.value),
+             name: pct(r.value / total * 100) + " of revenue" }]);
+      };
+      const leave = () => { svg.querySelectorAll(".mark").forEach(m => m.classList.remove("dim")); hideTip(); };
+      hit.addEventListener("pointerenter", enter);
+      hit.addEventListener("focus", enter);
+      hit.addEventListener("pointerleave", leave);
+      hit.addEventListener("blur", leave);
+      svg.appendChild(hit);
+    });
+    host.appendChild(svg);
+  }
+
+  /* ── Chart: orders by weekday (columns) ───────────────────────────── */
+  function renderWeekday(d) {
+    const host = document.getElementById("c-day");
+    host.replaceChildren();
+    const acc = Array(7).fill(0), cnt = Array(7).fill(0);
+    d.cur.forEach(x => { acc[x.dow] += x.orders; cnt[x.dow]++; });
+    const rows = DOW.map((n, i) => ({ name: n, value: cnt[i] ? acc[i] / cnt[i] : 0 }));
+    const max = niceMax(Math.max(...rows.map(r => r.value)), 3);
+    const peak = rows.reduce((a, b) => b.value > a.value ? b : a, rows[0]);
+    document.getElementById("s-day").textContent =
+      `Busiest on ${peak.name} — average orders per day`;
+
+    const W = 380, H = 190, m = { t: 14, r: 4, b: 26, l: 30 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Average orders by day of week" });
+
+    for (let i = 0; i <= 3; i++) {
+      const v = max * i / 3, y = m.t + ih - (v / max) * ih;
+      svg.appendChild(el("line", { x1: m.l, x2: m.l + iw, y1: y, y2: y,
+        stroke: cssv("--grid"), "stroke-width": 1 }));
+      const t = el("text", { x: m.l - 8, y: y + 4, "text-anchor": "end", class: "tick" });
+      t.textContent = Math.round(v);
+      svg.appendChild(t);
+    }
+
+    const band = iw / rows.length;
+    const bw = Math.min(24, band - 12);                 // ≤24px, air in the band
+    rows.forEach((r, i) => {
+      const h = Math.max(2, (r.value / max) * ih);
+      const x = m.l + i * band + (band - bw) / 2;
+      const y = m.t + ih - h;
+      const isPeak = r.name === peak.name;
+      const bar = el("path", { d: barPathV(x, y, bw, h, 4),
+        fill: isPeak ? cssv("--series-1") : cssv("--neutral"), class: "mark" });
+      svg.appendChild(bar);
+
+      const t = el("text", { x: x + bw/2, y: m.t + ih + 18, "text-anchor": "middle", class: "tick" });
+      t.textContent = r.name;
+      svg.appendChild(t);
+
+      if (isPeak) {                                     // label the extreme only
+        const v = el("text", { x: x + bw/2, y: y - 6, "text-anchor": "middle", class: "dlabel" });
+        v.textContent = Math.round(r.value);
+        svg.appendChild(v);
+      }
+
+      const hit = el("rect", { x: m.l + i * band, y: m.t, width: band, height: ih,
+        class: "hit", tabindex: "0" });
+      hit.setAttribute("role", "img");
+      hit.setAttribute("aria-label", `${r.name}: ${Math.round(r.value)} orders on average`);
+      const enter = () => {
+        const b = bar.getBoundingClientRect();
+        showTip(b.left + b.width/2, b.top, r.name,
+          [{ color: isPeak ? cssv("--series-1") : cssv("--neutral"),
+             value: nf(Math.round(r.value)), name: "orders / day" }]);
+      };
+      hit.addEventListener("pointerenter", enter);
+      hit.addEventListener("focus", enter);
+      hit.addEventListener("pointerleave", hideTip);
+      hit.addEventListener("blur", hideTip);
+      svg.appendChild(hit);
+    });
+    host.appendChild(svg);
+  }
+
+  /* ── Chart: revenue by state (sequential ramp = magnitude) ────────── */
+  function renderStates(d) {
+    const host = document.getElementById("c-state");
+    host.replaceChildren();
+    const total = sum(d.cur, "revenue");
+    const weights = [0.34, 0.24, 0.15, 0.12, 0.09, 0.06];
+    const rows = STATES.map((s, i) => ({ name: s, value: total * weights[i] }));
+    const max = Math.max(...rows.map(r => r.value));
+    /* States are nominal — a darker-where-bigger ramp would double-encode the
+       bar length and burn the only free channel. One series, one colour. */
+    const fill = cssv("--series-2");
+
+    const W = 380, rowH = 32, H = rows.length * rowH + 6, barW = W - 86;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+      "aria-label": "Revenue by state, ranked" });
+
+    rows.forEach((r, i) => {
+      const y = i * rowH + 4;
+      const nm = el("text", { x: 0, y: y + 10, class: "tick",
+        style: `fill:${cssv("--text-2")};font-size:11.5px` });
+      nm.textContent = r.name;
+      svg.appendChild(nm);
+
+      const w = Math.max(2, (r.value / max) * barW);
+      const bh = 10, by = y + 14;
+      const bar = el("path", { d: barPathH(0, by, w, bh, 4), fill, class: "mark" });
+      svg.appendChild(bar);
+
+      const vl = el("text", { x: w + 8, y: by + bh - 0.5, class: "dlabel" });
+      vl.textContent = pct(r.value / total * 100);
+      svg.appendChild(vl);
+
+      const hit = el("rect", { x: 0, y: y, width: W, height: rowH - 2, class: "hit", tabindex: "0" });
+      hit.setAttribute("role", "img");
+      hit.setAttribute("aria-label", `${r.name}: ${money(r.value)}`);
+      const enter = () => {
+        const b = bar.getBoundingClientRect();
+        showTip(b.right, b.top + b.height/2, r.name,
+          [{ color: fill, value: money(r.value), name: pct(r.value/total*100) }]);
+      };
+      hit.addEventListener("pointerenter", enter);
+      hit.addEventListener("focus", enter);
+      hit.addEventListener("pointerleave", hideTip);
+      hit.addEventListener("blur", hideTip);
+      svg.appendChild(hit);
+    });
+    host.appendChild(svg);
+  }
+
+  /* ── Sparkline for stat tiles ─────────────────────────────────────── */
+  function spark(vals, color) {
+    const W = 74, H = 26, max = Math.max(...vals), min = Math.min(...vals);
+    const rg = max - min || 1;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: W, height: H, "aria-hidden": "true" });
+    const d = vals.map((v, i) =>
+      `${i ? "L" : "M"}${(i/(vals.length-1))*W},${H - ((v-min)/rg)*(H-4) - 2}`).join(" ");
+    svg.appendChild(el("path", { d, fill: "none", stroke: color, "stroke-width": 1.6,
+      "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.9 }));
+    return svg;
+  }
+
+  /* ── KPI tiles — every one carries a comparison ───────────────────── */
+  function renderKpis(d) {
+    const host = document.getElementById("kpis");
+    host.replaceChildren();
+    const rev  = sum(d.cur, "revenue"),  revP  = sum(d.prev, "revenue");
+    const ord  = sum(d.cur, "orders"),   ordP  = sum(d.prev, "orders");
+    const aov  = rev / ord,              aovP  = revP / ordP;
+    const cust = Math.round(ord * 0.31), custP = Math.round(ordP * 0.33);
+
+    const weekly = arr => { const out = []; for (let i = 0; i < arr.length; i += Math.ceil(arr.length/12))
+      out.push(arr.slice(i, i + Math.ceil(arr.length/12)).reduce((s,x)=>s+x.revenue,0)); return out; };
+    const sp = weekly(d.cur);
+
+    const tiles = [
+      { label: "Total revenue", value: money(rev),  prev: revP,  cur: rev,  hero: true },
+      { label: "Orders",        value: nf(ord),     prev: ordP,  cur: ord },
+      { label: "New customers", value: nf(cust),    prev: custP, cur: cust },
+      { label: "Avg order value", value: money(aov), prev: aovP, cur: aov }
+    ];
+
+    tiles.forEach(t => {
+      const card = document.createElement("div");
+      card.className = "kpi" + (t.hero ? " hero" : "");
+      const l = document.createElement("div"); l.className = "kpi-label"; l.textContent = t.label;
+      const v = document.createElement("div"); v.className = "kpi-val";  v.textContent = t.value;
+      const foot = document.createElement("div"); foot.className = "kpi-foot";
+      const chg = (t.cur - t.prev) / t.prev * 100;
+      const dl = document.createElement("span");
+      dl.className = "delta " + (chg >= 0 ? "up" : "down");
+      dl.textContent = (chg >= 0 ? "▲ " : "▼ ") + Math.abs(chg).toFixed(1) + "%";
+      const nt = document.createElement("span");
+      nt.className = "delta-note"; nt.textContent = "vs previous " + d.range + "d";
+      foot.append(dl, nt);
+      const s = spark(sp, cssv("--series-1")); s.classList.add("spark");
+      foot.appendChild(s);
+      card.append(l, v, foot);
+      host.appendChild(card);
+    });
+
+    const chg = (rev - revP) / revP * 100;
+    document.getElementById("s-rev").textContent =
+      `${chg >= 0 ? "Up" : "Down"} ${Math.abs(chg).toFixed(1)}% on the previous ${d.range} days`;
+    document.getElementById("s-chan").textContent = d.channel === "all"
+      ? "Share of revenue by channel"
+      : `Share of revenue by channel — ${d.channel} highlighted`;
+    document.getElementById("headSub").textContent =
+      `Last ${d.range} days${d.channel === "all" ? "" : " · " + d.channel}`;
+  }
+
+  /* ── Table view — the relief channel ──────────────────────────────── */
+  function renderTables(d) {
+    const host = document.getElementById("tables");
+    host.replaceChildren();
+    const total = sum(d.cur, "revenue");
+
+    const mk = (cap, cols, rows) => {
+      const t = document.createElement("table");
+      const c = document.createElement("caption"); c.textContent = cap; t.appendChild(c);
+      const th = document.createElement("thead"), tr = document.createElement("tr");
+      cols.forEach(h => { const e = document.createElement("th");
+        e.scope = "col"; e.textContent = h; tr.appendChild(e); });
+      th.appendChild(tr); t.appendChild(th);
+      const tb = document.createElement("tbody");
+      rows.forEach(r => { const row = document.createElement("tr");
+        r.forEach((cell, i) => { const e = document.createElement(i ? "td" : "th");
+          if (!i) e.scope = "row";
+          e.textContent = cell; row.appendChild(e); });
+        tb.appendChild(row); });
+      t.appendChild(tb);
+      host.appendChild(t);
+    };
+
+    mk("Revenue — daily", ["Date", "This period", "Previous period"],
+      d.cur.map((r, i) => [
+        r.date.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" }),
+        money(r.revenue), money(d.prev[i].revenue) ]));
+
+    const w1 = [0.27,0.21,0.17,0.15,0.12,0.08];
+    mk("Top products", ["Product", "Revenue", "Share"],
+      PRODUCTS.map((p,i) => [p, money(total*w1[i]), pct(w1[i]*100)]));
+
+    const w2 = [0.34,0.24,0.15,0.12,0.09,0.06];
+    mk("Revenue by state", ["State", "Revenue", "Share"],
+      STATES.map((s,i) => [s, money(total*w2[i]), pct(w2[i]*100)]));
+
+    const acc = Array(7).fill(0), cnt = Array(7).fill(0);
+    d.cur.forEach(x => { acc[x.dow] += x.orders; cnt[x.dow]++; });
+    mk("Orders by weekday", ["Day", "Avg orders / day"],
+      DOW.map((n,i) => [n, nf(Math.round(cnt[i] ? acc[i]/cnt[i] : 0))]));
+  }
+
+  /* ── State + wiring ───────────────────────────────────────────────── */
+  let state = { range: 30, channel: "all" };
+
+  function renderAll() {
+    const d = slice(state.range, state.channel);
+    renderKpis(d);
+    renderRevenue(d);
+    renderChannel(d);
+    renderProducts(d);
+    renderWeekday(d);
+    renderStates(d);
+    renderTables(d);
+    document.getElementById("live").textContent =
+      `Showing last ${state.range} days, ${state.channel === "all" ? "all channels" : state.channel}.`;
+  }
+
+  document.getElementById("rangeSeg").addEventListener("click", e => {
+    const b = e.target.closest("button[data-range]"); if (!b) return;
+    state.range = +b.dataset.range;
+    [...e.currentTarget.querySelectorAll("button")]
+      .forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    renderAll();
+  });
+  document.getElementById("channelSel").addEventListener("change", e => {
+    state.channel = e.target.value; renderAll();
+  });
+  const tableBtn = document.getElementById("tableBtn");
+  tableBtn.addEventListener("click", () => {
+    const w = document.getElementById("tablewrap");
+    const on = w.hasAttribute("hidden");
+    if (on) w.removeAttribute("hidden"); else w.setAttribute("hidden", "");
+    tableBtn.setAttribute("aria-pressed", String(on));
+  });
+  const themeBtn = document.getElementById("themeBtn");
+  themeBtn.addEventListener("click", () => {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+    themeBtn.textContent = dark ? "Dark" : "Light";
+    renderAll();
+  });
+
+  const now = new Date();
+  document.getElementById("asOf").textContent =
+    "Data as of " + now.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+  document.getElementById("refreshed").textContent =
+    "Last refreshed " + now.toLocaleString("en-GB", { hour:"2-digit", minute:"2-digit",
+      day:"numeric", month:"short" }) + " · refreshes daily";
+
+  document.documentElement.setAttribute("data-theme", "light");
+  renderAll();
+  window.addEventListener("resize", () => hideTip());
+})();
+</script>
+</body>
+</html>
