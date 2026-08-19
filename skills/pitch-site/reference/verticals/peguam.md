@@ -72,9 +72,12 @@ interior — dark, low-key, no people, no signage. The reference build uses Pexe
 A photo-free typographic hero also works but tends to read as bland; the reference build
 started photo-free and had the photo added afterwards.
 
-### Keep the hero short, and a ticker is fine
-A law firm hero wants the masthead rule, the headline, **one** short line and the buttons —
-nothing more. Firm description belongs in the first section; hours belong in the masthead rule.
+### Hero type and the ticker
+Set the hero headline in the **sans**, not the display serif. A large serif headline reads as
+generic and over-precious on a law firm site; bold sans is more direct. Keep the serif for
+section headings and the wordmark so the document character survives below the fold. Do not
+italicise the accent word unless the italic is actually loaded — a faux-slanted sans looks
+broken; colour alone is enough.
 
 A scrolling practice-area ticker works here and is not undignified if it is built quietly:
 ~60s (not the 38s used on F&B sites), small letterspaced caps, hairline borders, **practice
