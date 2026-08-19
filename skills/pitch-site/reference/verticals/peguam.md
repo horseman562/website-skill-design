@@ -72,6 +72,18 @@ interior — dark, low-key, no people, no signage. The reference build uses Pexe
 A photo-free typographic hero also works but tends to read as bland; the reference build
 started photo-free and had the photo added afterwards.
 
+### Keep the hero short, and a ticker is fine
+A law firm hero wants the masthead rule, the headline, **one** short line and the buttons —
+nothing more. Firm description belongs in the first section; hours belong in the masthead rule.
+
+A scrolling practice-area ticker works here and is not undignified if it is built quietly:
+~60s (not the 38s used on F&B sites), small letterspaced caps, hairline borders, **practice
+areas only — never a claim or superlative**, and `prefers-reduced-motion` honoured.
+
+Build separators as **CSS-drawn shapes** (a 4px rotated square), not glyph escapes. A
+`C6` escape is font-dependent, and in generation it can be re-read as an octal escape and
+land in the file as a control character.
+
 ### There is NO pre-approval regime
 Unlike private clinics under the MAB (see `clinic.md`), **nothing requires Bar Council
 sign-off before publishing.** The 2025 Rules are principle-based and enforced after the fact
