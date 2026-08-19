@@ -29,6 +29,7 @@ Also copy this table into the new project's `notes.md`.
 | Cafe #1 | Ink Black + Bone + Sage | Full-bleed photo + inset hairline frame (magazine cover), centred light serif | Newsreader, Figtree |
 | Cafe #2 *(reusable template)* | Espresso + Oat + Brass | Bottom-anchored asymmetric split over full-bleed photo | EB Garamond, Hanken Grotesk |
 | **Clinic #4 *(reusable template)*** | **Chalk + Clay + Deep Olive** | **Light editorial, left type stack + circular photo mask with hairline rings** | **Spectral, Epilogue** |
+| **Law #1 (template)** | **Oxblood + Stone + Ivory** | **Letterhead: 3px top rule, ruled masthead, no photography** | **Libre Baskerville, Public Sans** |
 
 ---
 
@@ -36,8 +37,8 @@ Also copy this table into the new project's `notes.md`.
 
 Anton · Archivo Black · Barlow · Bebas Neue · Big Shoulders · Bodoni Moda ·
 Cormorant Garamond · DM Sans · DM Serif · EB Garamond · Exo 2 · Figtree · Fraunces ·
-Hanken Grotesk · Inter · Jost · Karla · Lato · Lora · Manrope · Montserrat · Newsreader ·
-Nunito · Oswald · Outfit · Playfair · Plus Jakarta · Poppins · Raleway · Space Grotesk ·
+Hanken Grotesk · Inter · Jost · Karla · Lato · Libre Baskerville · Lora · Manrope · Montserrat · Newsreader ·
+Nunito · Oswald · Outfit · Playfair · Plus Jakarta · Poppins · Public Sans · Raleway · Space Grotesk ·
 Spectral · Syne · Work Sans · Epilogue
 
 ## Hero layouts already spent
@@ -47,7 +48,8 @@ Split diagonal · Full dark bottom-anchor · Light split right panel · Dark + p
 strip · Centered + CTA + stats strip · CSS glow blobs (no photo) · Left-gradient fade ·
 2-col light split · Cobalt poster block + arch photo + stickers ·
 Magazine-cover inset hairline frame · Bottom-anchored asymmetric split ·
-Light editorial + circular photo mask
+Light editorial + circular photo mask ·
+Letterhead (ruled masthead, no photography)
 
 ## Ideas not yet used
 

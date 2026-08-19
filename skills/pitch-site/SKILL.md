@@ -15,10 +15,11 @@ three files. Demos deploy to `<slug>.bayuratech.com`.
 site that reads as a template and kills the pitch.
 
 > **First, check `reference/verticals/` for the prospect's trade.** Some trades are
-> regulated and the general house style breaks the law there — a private clinic may not
-> publish laudatory copy, treatment testimonials, or a red cross, and its site needs
-> Medicine Advertisements Board approval before going live. If a vertical file exists,
-> read it before researching; it overrides the defaults below.
+> regulated and the general house style breaks the law there. A private clinic may not
+> publish laudatory copy, treatment testimonials, or a red cross, and needs Medicine
+> Advertisements Board approval before going live. A law firm may not publish its fees
+> **at all**, nor any statistic it cannot verify. If a vertical file exists, read it
+> before researching — it overrides the defaults below.
 
 ---
 
@@ -141,6 +142,7 @@ flag it at the top of `contacts.md` as the reason.
 | File | Use |
 |---|---|
 | `reference/verticals/clinic.md` | **Private clinics — read first if the prospect is one.** MAB/MMC advertising rules, permitted vs prohibited content, clinic-specific research sources |
+| `reference/verticals/peguam.md` | **Law firms — read first if the prospect is one.** Legal Profession (Publicity) Rules 2025 (P.U. (A) 462/2025, in force 1 Jan 2026): no fees at all, no unverifiable stats, no outcome claims, no "pakar"; and rule 9 puts the developer's work on the firm's head |
 | `reference/differentiation.md` | The running table of every site's theme/hero/fonts. **Read before designing, append after.** |
 | `reference/architecture.md` | The house style — section order, signature CSS moves, tokens |
 | `reference/page-skeleton.html` | Token-driven boilerplate to start from |
