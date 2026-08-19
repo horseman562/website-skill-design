@@ -59,12 +59,18 @@ about results). State that basis. Claiming a non-existent express prohibition to
 destroys your credibility on everything else you have said.
 
 ### The stock-photo trap
-Gavels, scales of justice, Greek columns, suited handshakes. Gavels are not even used in
-Malaysian courts. Under **rule 4** this imagery works against the dignity requirement, and it
-is what every other Malaysian law firm site already looks like.
+**Images are NOT restricted.** The gazette never mentions images, photographs or logos —
+photography is a design decision here, not a compliance one. Never tell a firm otherwise.
 
-**Build law firm sites with no photography at all.** Typography, rules and whitespace carry
-the page. This also removes the only asset that would otherwise need swapping per prospect.
+What to avoid is the cliché: gavels (not even used in Malaysian courts), scales of justice,
+Greek columns, suited handshakes. Under **rule 4** that imagery works against the dignity
+requirement, and it is what every other Malaysian law firm site already looks like.
+
+What works instead: leather-bound law volumes, architectural detail, a restrained office
+interior — dark, low-key, no people, no signage. The reference build uses Pexels **159720**
+(law volumes, gold spine lettering) full-bleed behind the masthead with a two-stop scrim.
+A photo-free typographic hero also works but tends to read as bland; the reference build
+started photo-free and had the photo added afterwards.
 
 ### There is NO pre-approval regime
 Unlike private clinics under the MAB (see `clinic.md`), **nothing requires Bar Council
